@@ -5,8 +5,22 @@ const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 router.post('/', async (req, res) => {
-  const { cotizacionId, pdfBase64, revisoresEmails } = req.body;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://cotizador-albapesa.vercel.app' // tu frontend real
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
+  const { cotizacionId, pdfBase64, revisoresEmails } = req.body;
+   
   // // Asegurarse que Resend recibe un array
   // console.log('Recibido en backend:', req.body);
 
@@ -17,7 +31,7 @@ console.log('Correos que se mandan a Resend:', to);
 
   const approveLink = `${process.env.BACKEND_URL}/api/approve?id=${cotizacionId}&token=${token}`;
   const rejectLink = `${process.env.BACKEND_URL}/api/reject?id=${cotizacionId}&token=${token}`;
-
+ 
   try {
     await resend.emails.send({
       from: 'cotizaciones@albapesa.com.mx',

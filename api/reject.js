@@ -2,6 +2,22 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
+   // --- CORS manual ---
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://cotizador-albapesa.vercel.app'
+  ];
+
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   const { id, token } = req.query;
   const expectedToken = Buffer.from(`${id}-mi-clave`).toString('base64');
 
