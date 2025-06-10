@@ -1,32 +1,24 @@
-const express = require('express');
-const router = express.Router();
 
-router.get('/', async (req, res) => {
-   // --- CORS manual ---
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://cotizador-albapesa.vercel.app'
-  ];
+import { applyCors } from '../../utils/applyCors';
 
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
+export default async function handler(req, res) {
+  const corsHandled = applyCors(req, res);
+  if (corsHandled) return;
+
+  if (req.method !== 'GET') {
+    res.status(405).end();
+    return;
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
   const { id, token } = req.query;
   const expectedToken = Buffer.from(`${id}-mi-clave`).toString('base64');
 
   if (token !== expectedToken) {
     console.log(`❌ Intento de rechazar cotización ${id} con token inválido`);
-    return res.status(400).send('<h1>❌ Token inválido</h1>');
+    res.status(400).send('<h1>❌ Token inválido</h1>');
+    return;
   }
 
-  // Aquí podrías actualizar la base de datos → estado = Rechazada
   console.log(`❌ Cotización ${id} rechazada por revisor`);
 
   res.send(`
@@ -35,6 +27,4 @@ router.get('/', async (req, res) => {
       <p>Gracias por su revisión.</p>
     </div>
   `);
-});
-
-module.exports = router;
+}

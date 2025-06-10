@@ -1,38 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { Resend } = require('resend');
+import { applyCors } from '../../utils/applyCors';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+export default async function handler(req, res) {
+  const corsHandled = applyCors(req, res);
+  if (corsHandled) return;
 
-router.post('/', async (req, res) => {
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://cotizador-albapesa.vercel.app' // tu frontend real
-  ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (req.method !== 'POST') {
+    res.status(405).end(); // Method Not Allowed
+    return;
   }
 
   const { cotizacionId, pdfBase64, revisoresEmails } = req.body;
-   
-  // // Asegurarse que Resend recibe un array
-  // console.log('Recibido en backend:', req.body);
 
-const to = Array.isArray(revisoresEmails) ? revisoresEmails : [revisoresEmails];
-console.log('Correos que se mandan a Resend:', to);
+  console.log(`✅ Recibido create-cotizacion: ${cotizacionId}`);
+  console.log(`✅ Revisores:`, revisoresEmails);
 
-  const token = Buffer.from(`${cotizacionId}-mi-clave`).toString('base64');
-
-  const approveLink = `${process.env.BACKEND_URL}/api/approve?id=${cotizacionId}&token=${token}`;
-  const rejectLink = `${process.env.BACKEND_URL}/api/reject?id=${cotizacionId}&token=${token}`;
- 
-  try {
+  // Aquí puedes poner la lógica de enviar el correo con Resend
+   try {
     await resend.emails.send({
       from: 'cotizaciones@albapesa.com.mx',
       to: revisoresEmails, // siempre array
@@ -64,6 +51,39 @@ console.log('Correos que se mandan a Resend:', to);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
-});
 
-module.exports = router;
+  res.json({ success: true });
+}
+
+// router.post('/', async (req, res) => {
+//   const allowedOrigins = [
+//     'http://localhost:3000',
+//     'https://cotizador-albapesa.vercel.app' // tu frontend real
+//   ];
+//   const origin = req.headers.origin;
+//   if (allowedOrigins.includes(origin)) {
+//     res.setHeader('Access-Control-Allow-Origin', origin);
+//   }
+//   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+//   if (req.method === 'OPTIONS') {
+//     return res.status(200).end();
+//   }
+
+//   const { cotizacionId, pdfBase64, revisoresEmails } = req.body;
+   
+//   // // Asegurarse que Resend recibe un array
+//   // console.log('Recibido en backend:', req.body);
+
+// const to = Array.isArray(revisoresEmails) ? revisoresEmails : [revisoresEmails];
+// console.log('Correos que se mandan a Resend:', to);
+
+//   const token = Buffer.from(`${cotizacionId}-mi-clave`).toString('base64');
+
+//   const approveLink = `${process.env.BACKEND_URL}/api/approve?id=${cotizacionId}&token=${token}`;
+//   const rejectLink = `${process.env.BACKEND_URL}/api/reject?id=${cotizacionId}&token=${token}`;
+ 
+ 
+// // });
+
+// module.exports = router;
