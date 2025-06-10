@@ -1,7 +1,6 @@
 export function applyCors(req, res) {
   const allowedOrigins = [
-    'http://localhost:3000',
-    'https://backcotizador.vercel.app' // tu dominio real
+    '*' // tu dominio real
   ];
 
   const origin = req.headers.origin;
